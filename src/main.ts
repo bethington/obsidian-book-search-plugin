@@ -32,9 +32,9 @@ export default class BookSearchPlugin extends Plugin {
     });
 
     this.addCommand({
-      id: 'open-book-search-modal-to-insert',
-      name: 'Insert the metadata',
-      callback: () => this.insertMetadata(),
+      id: 'add-book-from-gutenberg',
+      name: 'Add a book from Gutenberg',
+      callback: () => this.addBookFromGutenberg(),
     });
 
     // This adds a settings tab so the user can configure various aspects of the plugin
@@ -161,6 +161,26 @@ export default class BookSearchPlugin extends Plugin {
 
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+  }
+
+  async addBookFromGutenberg(): Promise<void> {
+    try {
+      const bookTitle = await new Prompt({
+        title: 'Enter the title of the book',
+        placeholder: 'Title',
+      }).open();
+
+      const bookMarkdown = await scrapeBookFromGutenberg(bookTitle);
+
+      const fileName = `${bookTitle.replace(/ /g, '_')}.md`;
+      const filePath = `${this.settings.folder}/${fileName}`;
+      await this.app.vault.create(filePath, bookMarkdown);
+
+      new Notice(`Book "${bookTitle}" has been added.`);
+    } catch (err) {
+      console.warn(err);
+      this.showNotice(err);
+    }
   }
 
   async saveSettings() {
