@@ -1,6 +1,9 @@
 import axios from 'axios';
 import cheerio from 'cheerio';
 
+// Add this line
+const CORS_PROXY = "https://cors-anywhere.herokuapp.com/";
+
 export async function scrapeBookFromGutenberg(bookTitle: string, author: string): Promise<string> {
   // Replace spaces with '+' for the URL
   const formattedTitle = bookTitle.replace(/ /g, '+');
@@ -8,7 +11,7 @@ export async function scrapeBookFromGutenberg(bookTitle: string, author: string)
 
   // Get the book page
   const response = await axios.get(
-    `https://www.gutenberg.org/ebooks/search/?query=${formattedTitle}+by+${formattedAuthor}`,
+    `${CORS_PROXY}https://www.gutenberg.org/ebooks/search/?query=${formattedTitle}+by+${formattedAuthor}`,
   );
   const $ = cheerio.load(response.data);
 
@@ -16,7 +19,7 @@ export async function scrapeBookFromGutenberg(bookTitle: string, author: string)
   const bookUrl = $('li.booklink a').attr('href');
 
   // Get the book text
-  const bookResponse = await axios.get(`https://www.gutenberg.org${bookUrl}`);
+  const bookResponse = await axios.get(`${CORS_PROXY}https://www.gutenberg.org${bookUrl}`);
   const book$ = cheerio.load(bookResponse.data);
 
   // Convert the book text to markdown
