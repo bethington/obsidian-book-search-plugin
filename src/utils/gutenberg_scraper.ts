@@ -1,12 +1,13 @@
 import axios from 'axios';
 import cheerio from 'cheerio';
 
-export async function scrapeBookFromGutenberg(bookTitle: string): Promise<string> {
+export async function scrapeBookFromGutenberg(bookTitle: string, author: string): Promise<string> {
   // Replace spaces with '+' for the URL
   const formattedTitle = bookTitle.replace(/ /g, '+');
+  const formattedAuthor = author.replace(/ /g, '+');
 
   // Get the book page
-  const response = await axios.get(`https://www.gutenberg.org/ebooks/search/?query=${formattedTitle}`);
+  const response = await axios.get(`https://www.gutenberg.org/ebooks/search/?query=${formattedTitle}+${formattedAuthor}`);
   const $ = cheerio.load(response.data);
 
   // Get the book URL
