@@ -3,7 +3,8 @@ module.exports = {
 	preset: 'ts-jest',
 	testEnvironment: 'jsdom',
 	collectCoverageFrom: ['src/**/*.{js,ts}', '!**/node_modules/**'],
-	roots: ['<rootDir>/src'],
+	roots: ['<rootDir>/src', '<rootDir>/tests'],
+	testMatch: ['**/__tests__/**/*.[jt]s?(x)', '**/?(*.)+(spec|test).[tj]s?(x)', '**/tests/gutenberg_scraper.test.ts'],
 	moduleDirectories: ['node_modules', 'src'],
 	transform: {
 		'^.+\\.ts?$': 'ts-jest',
