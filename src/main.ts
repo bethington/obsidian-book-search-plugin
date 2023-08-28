@@ -32,15 +32,54 @@ export default class BookSearchPlugin extends Plugin {
     });
 
     this.addCommand({
-      id: 'add-book-from-gutenberg',
-      name: 'Add a book from Gutenberg',
-      callback: () => this.addBookFromGutenberg(),
+      id: 'open-book-search-modal-to-insert',
+      name: 'Insert the metadata',
+      callback: () => this.insertMetadata(),
+    });
+
+    this.addCommand({
+      id: 'create-gutenberg-book-note',
+      name: 'Create gutenberg book note',
+      callback: () => this.createGutenbergBookNote(),
     });
 
     // This adds a settings tab so the user can configure various aspects of the plugin
     this.addSettingTab(new BookSearchSettingTab(this.app, this));
 
     console.log(`Book Search: version ${this.manifest.version} (requires obsidian ${this.manifest.minAppVersion})`);
+  }
+  async createGutenbergBookNote(): Promise<void> {
+    try {
+      const book = await this.searchBookMetadata();
+
+      // open file
+      const activeLeaf = this.app.workspace.getLeaf();
+      if (!activeLeaf) {
+        console.warn('No active leaf');
+        return;
+      }
+
+      const renderedContents = await this.getRenderedContents(book);
+
+      // TODO: If the same file exists, it asks if you want to overwrite it.
+      // create new File
+      const fileName = makeFileName(book, this.settings.fileNameFormat);
+      const filePath = `${this.settings.folder}/${fileName}`;
+      const targetFile = await this.app.vault.create(filePath, renderedContents);
+
+      // if use Templater plugin
+      await useTemplaterPluginInFile(this.app, targetFile);
+
+      // open file
+      await activeLeaf.openFile(targetFile, { state: { mode: 'source' } });
+      activeLeaf.setEphemeralState({ rename: 'all' });
+
+      // cursor focus
+      await new CursorJumper(this.app).jumpToNextCursorLocation();
+    } catch (err) {
+      console.warn(err);
+      this.showNotice(err);
+    }
   }
 
   showNotice(message: unknown) {
@@ -161,26 +200,6 @@ export default class BookSearchPlugin extends Plugin {
 
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-  }
-
-  async addBookFromGutenberg(): Promise<void> {
-    try {
-      const bookTitle = await new Prompt({
-        title: 'Enter the title of the book',
-        placeholder: 'Title',
-      }).open();
-
-      const bookMarkdown = await scrapeBookFromGutenberg(bookTitle);
-
-      const fileName = `${bookTitle.replace(/ /g, '_')}.md`;
-      const filePath = `${this.settings.folder}/${fileName}`;
-      await this.app.vault.create(filePath, bookMarkdown);
-
-      new Notice(`Book "${bookTitle}" has been added.`);
-    } catch (err) {
-      console.warn(err);
-      this.showNotice(err);
-    }
   }
 
   async saveSettings() {
