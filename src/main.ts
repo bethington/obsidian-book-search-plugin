@@ -48,6 +48,8 @@ export default class BookSearchPlugin extends Plugin {
 
     console.log(`Book Search: version ${this.manifest.version} (requires obsidian ${this.manifest.minAppVersion})`);
   }
+  import { scrapeBookFromGutenberg } from './utils/gutenberg_scraper';
+
   async createGutenbergBookNote(): Promise<void> {
     try {
       const book = await this.searchBookMetadata();
@@ -61,11 +63,15 @@ export default class BookSearchPlugin extends Plugin {
 
       const renderedContents = await this.getRenderedContents(book);
 
+      // Scrape the book from Gutenberg and add it to the end of the contents
+      const bookMarkdown = await scrapeBookFromGutenberg(book.title, book.author);
+      const finalContents = `${renderedContents}\n${bookMarkdown}`;
+
       // TODO: If the same file exists, it asks if you want to overwrite it.
       // create new File
       const fileName = makeFileName(book, this.settings.fileNameFormat);
       const filePath = `${this.settings.folder}/${fileName}`;
-      const targetFile = await this.app.vault.create(filePath, renderedContents);
+      const targetFile = await this.app.vault.create(filePath, finalContents);
 
       // if use Templater plugin
       await useTemplaterPluginInFile(this.app, targetFile);
