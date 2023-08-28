@@ -7,7 +7,9 @@ export async function scrapeBookFromGutenberg(bookTitle: string, author: string)
   const formattedAuthor = author.replace(/ /g, '+');
 
   // Get the book page
-  const response = await axios.get(`https://www.gutenberg.org/ebooks/search/?query=${formattedTitle}+${formattedAuthor}`);
+  const response = await axios.get(
+    `https://www.gutenberg.org/ebooks/search/?query=${formattedTitle}+by+${formattedAuthor}`,
+  );
   const $ = cheerio.load(response.data);
 
   // Get the book URL
